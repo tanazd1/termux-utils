@@ -1,0 +1,24 @@
+#!/data/data/com.termux/env bash
+# Usage: cdt <directory> <command> [args...]
+# cd into directory, run command, then return to original directory
+
+# Exit if no directory given
+if [ -z "$1" ]; then
+    echo "Usage: cdt <directory> <command> [args...]"
+    exit 1
+fi
+
+# Save current directory
+orig_dir="$PWD"
+
+# Change to target directory
+cd "$1" || { echo "cd failed: $1"; exit 1; }
+
+# Shift to remove directory from arguments
+shift
+
+# Execute the remaining command(s)
+"$@"
+
+# Return to original directory
+cd "$orig_dir"

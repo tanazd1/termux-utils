@@ -1,0 +1,44 @@
+#!/data/data/com.termux/env bash
+# Normal interactive su wrapper
+# Reads normal rc/profile, fake $0, PS1 (~ + $PREFIX->/), -c, pipes
+
+# -------------------------------
+# 1️⃣ Fake $0 for echo
+echo_func() {
+    if [[ "$1" == "\$0" ]]; then
+        printf "su\n"
+    else
+        command echo "$@"
+    fi
+}
+alias echo='echo_func'
+
+# -------------------------------
+# 2️⃣ PS1 builder function
+build_prompt() {
+    local dir="${PWD/#$PREFIX//}"   # Replace $PREFIX prefix with /
+    if [[ "$dir" == "$HOME"* ]]; then
+        dir="~${dir#$HOME}"        # Replace home with ~
+    fi
+    PS1=" $dir # "
+}
+PROMPT_COMMAND=build_prompt
+
+# -------------------------------
+# 3️⃣ Pipe input
+if [ ! -t 0 ]; then
+    bash -s
+    exit
+fi
+
+# -------------------------------
+# 4️⃣ -c command
+if [ "$1" = "-c" ] && [ $# -ge 2 ]; then
+    shift
+    bash -c "$*"
+    exit
+fi
+
+# -------------------------------
+# 5️⃣ Default interactive shell
+exec bash

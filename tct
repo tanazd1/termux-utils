@@ -1,0 +1,64 @@
+#!/data/data/com.termux/files/usr/bin/bash
+TC="./tc"
+echo "=== Running automated tc tests ==="
+
+declare -A results
+
+run_test() {
+    local name="$1"
+    shift
+    local cmd_output
+    if ! cmd_output=$(eval "$@"); then
+        results["$name"]="FAIL"
+    else
+        results["$name"]="PASS"
+    fi
+}
+
+echo
+echo "--- Testing Numeric Range ---"
+run_test "Numeric Range" "$TC -r 1-5 'echo Job {#} Number {} Thread {thread}'"
+
+echo "--- Testing Letter Range ---"
+run_test "Letter Range" "$TC -r a-e 'echo Job {#} Letter {} Thread {thread}'"
+
+echo "--- Testing Multi-Letter Range ---"
+run_test "Multi-Letter Range" "$TC -r AAA-AAE 'echo Job {#} Letter {} Thread {thread}'"
+
+echo "--- Testing Numeric Exclude ---"
+run_test "Numeric Exclude" "$TC -r 1-5 --exclude-range-num=3 'echo Job {#} Number {} Thread {thread}'"
+
+echo "--- Testing Letter Include ---"
+run_test "Letter Include" "$TC -r a-e --include-range-letter=c 'echo Job {#} Letter {} Thread {thread}'"
+
+echo "--- Testing Dry-Run ---"
+run_test "Dry Run" "$TC -d -r 1-3 'echo Dry-run Job {#} Number {} Thread {thread}'"
+
+echo "--- Testing Verbose ---"
+run_test "Verbose" "$TC -V -r 1-3 'echo Verbose Job {#} Number {} Thread {thread}'"
+
+echo "--- Testing Stdin Piping ---"
+run_test "Stdin Piping" "echo -e 'apple\nbanana\ncherry' | $TC -j2 '{}' 'echo Fruit {} Thread {thread}'"
+
+echo "--- Testing On Error Exit (-e) ---"
+# The job will fail on 3
+run_test "On Error Exit" "$TC -e -r 1-5 'echo Number {}; [[ {} -eq 3 ]] && exit 1'"
+
+echo "--- Testing Continue on Error (-g) ---"
+# The job will fail on 2 but should continue
+run_test "Continue on Error" "$TC -g -r 1-3 'echo Number {}; [[ {} -eq 2 ]] && exit 1'"
+
+echo "--- Testing Heredoc ---"
+run_test "Heredoc" "$TC -r 1-3 \"\$(
+cat <<'EOF'
+echo 'Starting job {#}'
+sleep 0.1
+echo 'Finished {#} with value {}'
+EOF
+)\""
+
+echo
+echo "=== Test Summary ==="
+for key in "${!results[@]}"; do
+    printf "%-25s : %s\n" "$key" "${results[$key]}"
+done

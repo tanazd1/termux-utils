@@ -1,0 +1,3 @@
+#!/data/data/com.termux/env bash
+# Universal Termux launcher (shebang-free scripts)
+exec /system/bin/linker64 /data/data/com.termux/env "$@"

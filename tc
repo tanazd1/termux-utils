@@ -1,0 +1,162 @@
+#!/data/data/com.termux/files/usr/bin/bash
+HELP_TEXT='
+tc - parallel job runner
+Usage: tc [ -jN ] [ -V ] [ -d ] [ -e | -g ] [ -r RANGE ] [ --include/except-range-letters/num ] "cmd"
+       command | tc [ -jN ] [ -V ] [ -d ] [ -e | -g ] [ -r RANGE ] [ --include/except-range-letters/num ] "cmd"
+
+A parallel job runner in pure Bash (Termux-ready).
+
+Options:
+  -jN                       Number of threads (0=all cores)
+  -V                        Verbose: print output immediately
+  -d                        Dry-run: show commands without executing
+  -e, --on-error-exit       Stop queuing jobs on first error
+  -g, --run-even-if-err     Continue running even if a job fails (default)
+  -r RANGE                  Numeric (1-10), single letters (a-c), or multi-letter (AAA-AAZ/AAA-ZZZ)
+  --include-range-num=VAL   Include only specific numeric values
+  --exclude-range-num=VAL   Exclude specific numeric values
+  --include-range-letter=VAL Include only letters
+  --exclude-range-letter=VAL Exclude letters
+  -h                        Show this help text
+
+Placeholders:
+  {#}       Job index (1,2,3...)
+  {}        Value from -r or stdin
+  {thread}  Thread index (0 to N-1)
+
+Positional arguments:
+cmd           Command Template (single line or heredoc)
+'
+
+[[ "$1" == "-h" || "$1" == "--help" || -z "$1" ]] && { echo "$HELP_TEXT"; exit 0; }
+
+# --- Defaults ---
+threads=1; verbose=0; dryrun=0; exit_on_error=0; rng=""; cmd=""
+inc_num=(); exc_num=(); inc_let=(); exc_let=()
+args=("$@"); i=1
+
+# --- Parse Arguments ---
+while [[ $i -le $# ]]; do
+    a="${args[$((i-1))]}"
+    case "$a" in
+        -j*) threads="${a:2}" ;;
+        -V) verbose=1 ;;
+        -d) dryrun=1 ;;
+        -g|--run-even-if-err) exit_on_error=0 ;;
+        -e|--on-error-exit) exit_on_error=1 ;;
+        -r) rng="${args[$i]}"; i=$((i+1)) ;;
+        --include-range-num=*) inc_num+=("${a#*=}") ;;
+        --exclude-range-num=*) exc_num+=("${a#*=}") ;;
+        --include-range-letter=*) inc_let+=("${a#*=}") ;;
+        --exclude-range-letter=*) exc_let+=("${a#*=}") ;;
+        -h|--help) echo "$HELP_TEXT"; exit 0 ;;
+        *) cmd="$a" ;;
+    esac
+    i=$((i+1))
+done
+
+[[ -z "$cmd" ]] && { echo "Error: Command template required."; echo "$HELP_TEXT"; exit 1; }
+
+# --- Range Expansion ---
+range_expand() {
+    local start="$1" end="$2" res=()
+    if [[ $start =~ ^[0-9]+$ ]]; then
+        for ((x=start;x<=end;x++)); do res+=("$x"); done
+    else
+        local len=${#start}
+        s_ord=(); e_ord=()
+        for ((i=0;i<len;i++)); do
+            s_ord[i]=$(printf '%d' "'${start:i:1}")
+            e_ord[i]=$(printf '%d' "'${end:i:1}")
+        done
+        recurse() {
+            local pos=$1 cur="$2"
+            if ((pos==len)); then res+=("$cur"); return; fi
+            for ((c=s_ord[pos];c<=e_ord[pos];c++)); do
+                recurse $((pos+1)) "$cur$(printf \\$(printf '%03o' "$c"))"
+            done
+        }
+        recurse 0 ""
+    fi
+    echo "${res[@]}"
+}
+
+# --- Input Generation ---
+inputs=()
+if [[ -p /dev/stdin ]]; then
+    while read -r line; do [[ -n "$line" ]] && inputs+=("$line"); done
+elif [[ -n "$rng" ]]; then
+    if [[ $rng == *-* ]]; then
+        IFS='-' read -r s e <<< "$rng"
+        inputs=( $(range_expand "$s" "$e") )
+    else
+        inputs=("$rng")
+    fi
+else
+    inputs=("")
+fi
+
+# --- Filters ---
+filtered=()
+for val in "${inputs[@]}"; do
+    skip=0
+    if [[ $val =~ ^[0-9]+$ ]]; then
+        [[ ${#inc_num[@]} -gt 0 ]] && { skip=1; for x in "${inc_num[@]}"; do [[ "$val" == "$x" ]] && skip=0; done; }
+        for x in "${exc_num[@]}"; do [[ "$val" == "$x" ]] && skip=1; done
+    else
+        [[ ${#inc_let[@]} -gt 0 ]] && { skip=1; for x in "${inc_let[@]}"; do [[ "$val" == "$x" ]] && skip=0; done; }
+        for x in "${exc_let[@]}"; do [[ "$val" == "$x" ]] && skip=1; done
+    fi
+    (( skip==0 )) && filtered+=("$val")
+done
+
+[[ ${#filtered[@]} -eq 0 && "$cmd" == *"{}"* ]] && { echo "Error: No input for {}"; exit 1; }
+[[ ${#filtered[@]} -eq 0 ]] && filtered=("")
+
+# --- Thread Control ---
+tmp_dir=$(mktemp -d); trap "rm -rf $tmp_dir" EXIT
+pids=()
+job_idx=1
+thread_idx=0
+
+run_job() {
+    local job_idx="$1" val="$2" thread_idx="$3" out_file="$4"
+    local c="${cmd//\{\#\}/$job_idx}"
+    c="${c//\{\}/$val}"
+    c="${c//\{thread\}/$thread_idx}"
+    if ((dryrun)); then
+        echo "[dry-run] $c" >"$out_file"
+        return
+    fi
+    bash -c "$c" >"$out_file" 2>&1
+    local ret=$?
+    if (( ret != 0 && exit_on_error )); then
+        touch "$tmp_dir/STOP"
+    fi
+}
+
+# --- Main Execution Loop ---
+active_jobs=0
+for val in "${filtered[@]}"; do
+    [[ -f "$tmp_dir/STOP" ]] && break
+    out_file="$tmp_dir/job_$job_idx.out"
+    run_job "$job_idx" "$val" "$thread_idx" "$out_file" &
+    pids+=($!)
+    job_idx=$((job_idx+1))
+    thread_idx=$(((thread_idx+1)%threads))
+
+    # Limit background jobs to $threads
+    active_jobs=$((active_jobs+1))
+    if ((active_jobs>=threads)); then
+        wait -n
+        active_jobs=$((active_jobs-1))
+    fi
+done
+
+wait
+
+# --- Print all outputs ---
+for out in "$tmp_dir"/job_*.out; do cat "$out"; done
+
+# --- Exit Code ---
+[[ -f "$tmp_dir/STOP" ]] && exit 1 || exit 0
