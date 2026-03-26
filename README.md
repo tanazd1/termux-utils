@@ -22,7 +22,7 @@ A collection of powerful utilities to supercharge your Termux workflow.
 apt update -y && apt upgrade -y
 apt install curl wget tar coreutils -y
 
-**RIGHT NOW, THERE IS A PROMBLEM WITH THE URL. WE WILL FIX IT NOW...**
+curl -sL https://raw.githubusercontent.com/tanazd1/termux-miscellaneous/main/install.sh | bash
 
 ---
 
