@@ -17,7 +17,7 @@ A collection of powerful utilities to supercharge your Termux Application!!!
   ```bash
   ns <INTERPRETER> <SCRIPT>
   ```  
-- `"su"` → Fake superuser wrapper  
+- `"su"` → Fake superusr wrapper  
 - `"tc"` → Parallel job runner  
 - `"tct"` → Test `"tc"`  
 - `"x"` → Universal archive extractor  
