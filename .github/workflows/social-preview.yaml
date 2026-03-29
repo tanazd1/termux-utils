@@ -3,7 +3,7 @@ name: Update Social Preview
 on:
   schedule:
     # Runs every day at 00:00 UTC
-    - cron: '0 0 * * *'
+    - cron: '20 0 * * *'
   push:
     branches:
       - main
