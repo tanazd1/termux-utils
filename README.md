@@ -3,7 +3,7 @@
 
 🚀 **Termux Misc Toolkit**
 
-A collection of powerful utilities to supercharge your Termux Application!!!
+A collection of powerful utilities to supercharge your Terux Application!!!
 
 ![Stars](https://img.shields.io/github/stars/tanazd1/termux-miscellaneous?style=flat&color=blue) ![Forks](https://img.shields.io/github/forks/tanazd1/termux-miscellaneous?style=flat&color=green) ![Issues](https://img.shields.io/github/issues/tanazd1/termux-miscellaneous?style=flat&color=orange) ![Pull Requests](https://img.shields.io/github/issues-pr/tanazd1/termux-miscellaneous?style=flat&color=red) ![License](https://img.shields.io/github/license/tanazd1/termux-miscellaneous?style=flat&color=yellowgreen) ![Last Commit](https://img.shields.io/github/last-commit/tanazd1/termux-miscellaneous?style=flat&color=purple) ![Open Source](https://img.shields.io/badge/Open%20Source-Yes-brightgreen)
 
