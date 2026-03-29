@@ -1,5 +1,0 @@
-type: Custom Properties
-owner: tanazd1
-repo_purpose: Termux utilities
-default_timeout: 30
-enable_logging: true
