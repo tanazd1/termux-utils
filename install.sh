@@ -23,7 +23,7 @@ echo "[✓] Done!"
 echo "installing headers..."
 
 SO="libobjects.so"
-H="objects.so"
+H="objects.h"
 HDIR="$PREFIX/include"
 SODIR="$PREFIX/lib"
 
