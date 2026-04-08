@@ -1,6 +1,6 @@
 {
-  "name": "termux-utils",
-  "version": "8.2.0",
+  "name": "@tanazd2/termux-utils",
+  "version": "8.4.0",
   "description": "termux utilities",
   "keywords": [
     "cli",
