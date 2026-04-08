@@ -7,8 +7,7 @@ debug=0; quiet=0; invert=0; raw=0
 # Parse flags
 while [[ "$1" == -* ]]; do
     case "$1" in
-        -h|--help) echo "Usage: i [OPTIONS] CONDITION
--a and -o not supported."; exit 0 ;;
+        -h|--help) echo -e "Usage: i [OPTIONS] CONDITION \n -a and -o not supported."; exit 0 ;;
         -d|--debug) debug=1 ;;
         -q|--quiet) quiet=1 ;;
         -n|--not) invert=1 ;;
