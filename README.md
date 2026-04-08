@@ -24,6 +24,8 @@ A collection of powerful utilities to supercharge your Termux Application!!!
 - `"lock"` → Lock your terminal  
 - `"exe!"` → Run scripts even from internal storage  
 - `"r"` → Run hex codes!
+- There are more commands, figure it out yourself!
+- Hint: its not in the wiki
 
 
 
