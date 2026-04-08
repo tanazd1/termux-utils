@@ -1,7 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/bash
-# push - Push local repo to GitHub with git add *
+# push - Push local repo to GitHub safely
 
-# Check if a commit message was provided
 if [ -z "$1" ]; then
     echo "Usage: ./push \"commit message\""
     exit 1
@@ -10,10 +9,18 @@ fi
 # Stage all non-hidden files
 git add *
 
-# Commit changes
-git commit -m "$1"
+# Commit changes only if there are staged changes
+if ! git diff --cached --quiet; then
+    git commit -m "$1"
+else
+    echo "⚠️ Nothing to commit, working tree clean"
+fi
 
-# Push to main branch
-git push origin main
-
-echo "✅ Pushed to GitHub!"
+# Try to push
+if git push origin main; then
+    echo "✅ Pushed to GitHub!"
+else
+    echo "❌ Push failed! Remote has commits you don't have."
+    echo "Hint: run 'git pull --rebase origin main' first, then ./push again"
+    exit 1
+fi

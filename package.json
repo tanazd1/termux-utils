@@ -1,6 +1,6 @@
 {
   "name": "termux-utils",
-  "version": "7.4.0",
+  "version": "7.8.2",
   "description": "termux utilities",
   "keywords": [
     "cli",
