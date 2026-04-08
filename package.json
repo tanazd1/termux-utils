@@ -1,6 +1,6 @@
 {
   "name": "termux-utils",
-  "version": "6.2.0",
+  "version": "7.0.0",
   "description": "termux utilities",
   "keywords": [
     "cli",
@@ -22,7 +22,8 @@
   "type": "commonjs",
   "main": "index.js",
   "bin": {
-    "termux-utils": "index.js"
+    "termux-utils": "./index.js",
+    "tu": "./index.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
