@@ -1,0 +1,19 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# push - Push local repo to GitHub with git add *
+
+# Check if a commit message was provided
+if [ -z "$1" ]; then
+    echo "Usage: ./push \"commit message\""
+    exit 1
+fi
+
+# Stage all non-hidden files
+git add *
+
+# Commit changes
+git commit -m "$1"
+
+# Push to main branch
+git push origin main
+
+echo "✅ Pushed to GitHub!"

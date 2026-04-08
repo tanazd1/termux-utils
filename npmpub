@@ -1,0 +1,29 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# npmpub - update version in package.json and npm publish
+
+# Check if version argument is provided
+if [ -z "$1" ]; then
+    echo "Usage: ./npmpub vX.X.X"
+    exit 1
+fi
+
+# Remove leading 'v' if present
+VERSION="${1#v}"
+
+# Update package.json version
+if [ ! -f "./package.json" ]; then
+    echo "Error: package.json not found in current directory."
+    exit 1
+fi
+
+# Use jq if available, otherwise sed fallback
+if command -v jq >/dev/null 2>&1; then
+    jq --arg ver "$VERSION" '.version=$ver' package.json > package.tmp.json && mv package.tmp.json package.json
+else
+    sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" package.json
+fi
+
+# Publish the package
+npm publish
+
+echo "✅ Published version $VERSION to npm!"
