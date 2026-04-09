@@ -1,6 +1,6 @@
 {
   "name": "@tanazd2/termux-utils",
-  "version": "13.2.7",
+  "version": "14.0.0",
   "description": "termux utilities",
   "keywords": [
     "cli",

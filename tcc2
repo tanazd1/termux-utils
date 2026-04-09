@@ -1,0 +1,7 @@
+#!/data/data/com.termux/files/usr/bin/sh
+
+for arg in "$@"; do
+  [ "$arg" = "-o" ] && exec $PREFIX/bin/gcc "$@"
+done
+
+exec $PREFIX/bin/gcc "$@" -o app
