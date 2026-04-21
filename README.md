@@ -1,3 +1,5 @@
+NOTE. THE REPO WAS ARCHIVED FROM HOW CORRUPTED IT IS
+
 
 ![Demo of C shell and x working](.hidden/.secrets/x1/Demo.png)
 
